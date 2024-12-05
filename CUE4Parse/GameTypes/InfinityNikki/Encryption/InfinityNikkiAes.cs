@@ -9,9 +9,9 @@ using Org.BouncyCastle.Utilities;
 
 namespace CUE4Parse.GameTypes.InfinityNikki.Encryption;
 
-public static class InfinityNikkieAes
+public static class InfinityNikkiAes
 {
-    public static byte[] InfinityNikkieDecrypt(byte[] bytes, int beginOffset, int count, bool isIndex, IAesVfsReader reader)
+    public static byte[] InfinityNikkiDecrypt(byte[] bytes, int beginOffset, int count, bool isIndex, IAesVfsReader reader)
     {
         if (bytes.Length < beginOffset + count)
             throw new IndexOutOfRangeException("beginOffset + count is larger than the length of bytes");
@@ -22,12 +22,19 @@ public static class InfinityNikkieAes
 
         var output = AesProvider.Decrypt(bytes, beginOffset, count, reader.AesKey);
 
-        for (var i = 0; i < count >> 4; i++)
-        {
-            output[i * 16] ^= reader.AesKey.Key[0];
-            output[i * 16 + 15] ^= reader.AesKey.Key[reader.AesKey.Key.Length - 1];
-        }
+        output = PostDecryptData(output, count, reader.AesKey.Key);
 
         return output;
+    }
+
+    public static byte[] PostDecryptData(byte[] bytes, int count, byte[] key)
+    {
+        for (var i = 0; i < count >> 4; i++)
+        {
+            bytes[i * 16] ^= key[0];
+            bytes[i * 16 + 15] ^= key[^1];
+        }
+
+        return bytes;
     }
 }
